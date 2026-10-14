@@ -1,9 +1,9 @@
-{ config, pkgs, unstable, ... }:
+{ config, pkgs, ... }:
 
 {
   home.username = "suman";
   home.homeDirectory = "/home/suman";
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
 
   home.packages = with pkgs; [
     kitty
