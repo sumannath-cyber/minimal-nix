@@ -1,20 +1,25 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   home.username = "suman";
   home.homeDirectory = "/home/suman";
   home.stateVersion = "26.05";
 
+  programs.home-manager.enable = true;
+
+  # Wofi is needed by Hyprland's default Super+R app launcher bind
   home.packages = with pkgs; [
-    kitty
-    firefox
-    thunar
-    neovim
-    git
+    wofi
   ];
 
-  programs.bash.enable = true;
-  programs.git.enable = true;
+  # Kitty Terminal
+  programs.kitty.enable = true;
 
-  programs.home-manager.enable = true;
+  # Neovim Editor
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    viAlias = true;
+    vimAlias = true;
+  };
 }
