@@ -1,70 +1,69 @@
-{ config, pkgs, lib, ... }:
+{ pkgs, ... }:
 
 {
-  imports = [
-    ./hardware-configuration.nix
-  ];
+  imports = [ ./hardware-configuration.nix ];
 
-  # Allow unfree packages globally for the stable channel
-  nixpkgs.config.allowUnfree = true;
-
-  # Bootloader
+  # Bootloader (systemd-boot for UEFI)
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Host
-  networking.hostName = "idk-nix";
+  # Hostname & Networking
+  networking.hostName = "notNix";
   networking.networkmanager.enable = true;
 
-  # Time & Locales
+  # Timezone & Locale
   time.timeZone = "Asia/Kolkata";
   i18n.defaultLocale = "en_US.UTF-8";
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "en_IN";
-    LC_IDENTIFICATION = "en_IN";
-    LC_MEASUREMENT = "en_IN";
-    LC_MONETARY = "en_IN";
-    LC_NAME = "en_IN";
-    LC_NUMERIC = "en_IN";
-    LC_PAPER = "en_IN";
-    LC_TELEPHONE = "en_IN";
-    LC_TIME = "en_IN";
-  };
 
-  # User
-  users.users.suman = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
-  };
+  # Enable Flakes & Unfree Packages
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nixpkgs.config.allowUnfree = true;
 
-  # Base X11 support (Required for LightDM's greeter interface)
-  services.xserver.enable = true;
-
-  # Display Manager: LightDM
-  services.xserver.displayManager.lightdm.enable = true;
-
-  # Window Manager: MangoWC
-  programs.mango.enable = true;
-
-  # Portals
-  xdg.portal = {
+  # Hyprland & SDDM Display Manager
+  programs.hyprland.enable = true;
+  services.displayManager.sddm = {
     enable = true;
-    wlr.enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-gtk
-    ];
+    wayland.enable = true;
   };
 
-  # Audio
+  # Audio (PipeWire)
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
-    pulse.enable = true;
     alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
   };
 
-  # Flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # Graphics & Hardware Video Acceleration (Intel 6th Gen Skylake)
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+    extraPackages = with pkgs; [
+      intel-media-driver # VA-API (iHD) for Skylake (Gen 9)
+      libvdpau-va-gl
+    ];
+  };
+
+  # User Account
+  users.users.suman = {
+    isNormalUser = true;
+    extraGroups = [ "networkmanager" "wheel" "video" "audio" ];
+  };
+
+  # Essential System Packages
+  environment.systemPackages = with pkgs; [
+    git
+    neovim
+    wget
+    wl-clipboard
+    libva-utils # Provides vainfo to verify hardware video acceleration
+  ];
+
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    LIBVA_DRIVER_NAME = "iHD";
+  };
 
   system.stateVersion = "26.05";
 }
