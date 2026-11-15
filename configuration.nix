@@ -3,9 +3,13 @@
 {
   imports = [ ./hardware-configuration.nix ];
 
-  # Bootloader (systemd-boot for UEFI)
+  # Bootloader (systemd-boot for UEFI + allow emergency boot parameter editing)
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.editor = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # Prevent Intel 6th-gen (Skylake) Wayland display freezes
+  boot.kernelParams = [ "i915.enable_psr=0" ];
 
   # Hostname & Networking
   networking.hostName = "notNix";
@@ -19,10 +23,10 @@
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;
 
-  # Hyprland & SDDM Display Manager
+  # Hyprland & Display Manager (boot to TTY first to verify Hyprland cleanly)
   programs.hyprland.enable = true;
   services.displayManager.sddm = {
-    enable = true;
+    enable = false;
     wayland.enable = true;
   };
 
@@ -57,12 +61,14 @@
     neovim
     wget
     wl-clipboard
-    libva-utils # Provides vainfo to verify hardware video acceleration
+    libva-utils
   ];
 
+  # Wayland, Intel VA-API, and Software Cursor compatibility
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
     LIBVA_DRIVER_NAME = "iHD";
+    WLR_NO_HARDWARE_CURSORS = "1";
   };
 
   system.stateVersion = "26.05";
